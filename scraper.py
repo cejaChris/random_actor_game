@@ -57,4 +57,5 @@ for url in urls:
     scraped_dfs.append(df)
 
 total_df = pd.concat(scraped_dfs, ignore_index='True').reset_index(drop=True)
+total_df['Rank'] = pd.to_numeric(total_df['Rank'], errors='coerce')
 total_df.to_csv('top_1000_grossing_actors.csv', index=False)
