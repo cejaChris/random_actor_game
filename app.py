@@ -36,7 +36,7 @@ if st.session_state['game_section'] == 'naming_players':
     player_names = []
 
     for player in player_list:
-        player_name = st.text_input(f'Player {player} Name', value=f'Player {player}')
+        player_name = st.text_input(label= f'Player {player}',value=f'Name')
         player_names.append(player_name)
     
     done = st.button('Done')
@@ -58,17 +58,68 @@ if st.session_state['game_section'] == 'difficulty':
 if st.session_state['game_section'] == 'ready':
     difficulty = st.session_state['difficulty']
     game_df = actor_df.loc[actor_df['Rank'] <= difficulty]
+    players = st.session_state['player_names']
 
-    valid_actor = False
+    if 'Give Up' not in players:
+        players.append('Give Up')
 
-    while not valid_actor:
+    
+    if 'valid_actor' not in st.session_state:
+        st.session_state['valid_actor'] = False
+
+    if 'score' not in st.session_state:
+        st.session_state['score'] = {
+            'Actor': [],
+            'Winner': []
+        }
+
+    while not st.session_state['valid_actor']:
         random_number = random.randint(1, difficulty)
         actor = game_df.loc[game_df['Rank'] == random_number]['Name'].item()
 
         if actor not in st.session_state['used_actors']:
-            valid_actor = True
+            st.session_state['valid_actor'] = True
+            st.session_state['current_actor'] = actor
+            st.session_state['used_actors'].append(actor)
 
-    st.header(actor, text_alignment='center')
+
+    st.header(st.session_state['current_actor'], text_alignment='center')
+
+
+    winner = st.radio('Round Winner', players)
+    next = st.button('Next')
+    finish = st.button('Finish')
+    
+    if finish:
+        if winner != 'Give Up':
+            st.session_state['score']['Winner'].append(winner)
+        else:
+            st.session_state['score']['Winner'].append('N/A')
+
+        st.session_state['score']['Actor'].append(st.session_state['current_actor'])
+        st.session_state['game_section'] = 'finish'
+        st.rerun()
+
+    if next:
+        if winner != 'Give Up':
+            st.session_state['score']['Winner'].append(winner)
+        else:
+            st.session_state['score']['Winner'].append('N/A')
+
+        st.session_state['score']['Actor'].append(st.session_state['current_actor'])
+        st.session_state['valid_actor'] = False
+        st.rerun()
+
+
+if st.session_state['game_section'] == 'finish':
+    df = pd.DataFrame(st.session_state['score'])
+    st.dataframe(st.session_state['score'])
+    
+    new_game = st.button('New Game')
+
+    if new_game:
+        st.session_state.clear()
+        st.rerun()
 
 
 
